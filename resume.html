@@ -14,7 +14,10 @@ canvas {
 
 function startGame() {
     myGameArea.start();
-    pipe = new createStraightPipe(100, "red")
+    canvassGrid = grid;
+    canvassGrid.initializeGrid(10, 15, myGameArea.canvas);
+    canvassGrid.getCells();
+    canvassGrid.createBorders(borderwidth=3);
 }
 
 var myGameArea = {
@@ -27,30 +30,72 @@ var myGameArea = {
     }
 }
 
+getInfoOnCell = function(rowNumber, columnNumber, rowSize, columnSize) {
+        cellData = {
+            topBorder : rowNumber * rowSize,
+            bottomBorder : (rowNumber + 1) * rowSize,
+            leftBorder : columnNumber * columnSize,
+            rightBorder : (columnNumber + 1) * columnSize
+        }
+
+        // console.log(cellData)
+
+        return cellData
+    }
+
+
 var grid = {
     numberOfRows : 5,
     numberOfColumns : 5,
     canvas : null,
-    cellInfo : null,
-    initializeGrid : function(number_of_rows, number_of_columns, canvas) {
+    gridArray : [],
+    initializeGrid : function(number_of_rows, number_of_columns, inputtedCanvas) {
         self.numberOfRows = number_of_rows;
         self.numberOfColumns = number_of_columns;
-        self.canvas = canvas;
+        self.canvas = inputtedCanvas;
+        console.log("Rows: ", self.numberOfRows, "\nColumns: ", self.numberOfColumns, "\nCanvas: ", self.canvas)
     },
-    getInfoOnCell(rowNumber, columnNumber) {
-        
+    getInfoOnCell : function(rowNumber, columnNumber, rowSize, columnSize) {
+        cellData = {
+            topBorder : rowNumber * rowSize,
+            bottomBorder : (rowNumber + 1) * rowSize,
+            leftBorder : columnNumber * columnSize,
+            rightBorder : (columnNumber + 1) * columnSize
+        }
+
+        // console.log(cellData)
+
+        return cellData
     },
-    getCells : function(rowNumber, columnNumber) {
-        rowSize = this.canvas.height/self.numberOfRows;
-        columnSize = this.canvas.width/self.numberOfColumns;
-        var gridArray = []
+    getCells : function() {
+        rowSize = self.canvas.height/self.numberOfRows;
+        columnSize = self.canvas.width/self.numberOfColumns;
+        self.gridArray = []
         for (let i=0; i<self.numberOfRows; i++) {
             gridArray.push([]);
             for(let j=0; j<self.numberOfColumns; j++) {
-                gridArray[i].push([]);
+                gridArray[i].push(getInfoOnCell(i, j, rowSize, columnSize)  );
 
             }
         }
+    },
+    createBorders : function(borderwidth=5, fillstyle="black") {
+        self.canvas.fillStyle = fillstyle;
+        canvas = self.canvas
+        context = self.canvas.getContext("2d")
+        gridArray = self.gridArray
+
+        for (let row=0;row<gridArray.length;row++) {
+            context.fillRect(0, gridArray[row][0]['topBorder'] - borderwidth/2, canvas.width, borderwidth);
+            context.fillRect(0, gridArray[row][0]['bottomBorder'] - borderwidth/2, canvas.width, borderwidth);
+
+        }
+        for (let column=0;column<self.gridArray[0].length;column++) {
+            context.fillRect(gridArray[0][column]['leftBorder'] - borderwidth/2, 0, borderwidth, canvas.height);
+            context.fillRect(gridArray[0][column]['rightBorder'] - borderwidth/2, 0, borderwidth, canvas.height);
+
+        }
+
     }
 }
 
