@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border: 1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+function startGame() {
+    myGameArea.start();
+    pipe = new createStraightPipe(100, "red")
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 480;
+        this.canvas.height = 270;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+    }
+}
+
+var grid = {
+    numberOfRows : 5,
+    numberOfColumns : 5,
+    canvas : null,
+    cellInfo : null,
+    initializeGrid : function(number_of_rows, number_of_columns, canvas) {
+        self.numberOfRows = number_of_rows;
+        self.numberOfColumns = number_of_columns;
+        self.canvas = canvas;
+    },
+    getInfoOnCell(rowNumber, columnNumber) {
+        
+    },
+    getCells : function(rowNumber, columnNumber) {
+        rowSize = this.canvas.height/self.numberOfRows;
+        columnSize = this.canvas.width/self.numberOfColumns;
+        var gridArray = []
+        for (let i=0; i<self.numberOfRows; i++) {
+            gridArray.push([]);
+            for(let j=0; j<self.numberOfColumns; j++) {
+                gridArray[i].push([]);
+
+            }
+        }
+    }
+}
+
+
+function createStraightPipe(angle, color) {
+    this.width = 300;
+    this.height = 100;
+    this.x = 100
+    this.y = 100
+    context = myGameArea.context;
+    context.fillStyle = "red";
+    context.fillRect(this.x, this.y, this.width, this.height)
+}
+
+</script>
+
+<p>We have created a game area! (or at least an empty canvas)</p>
+
+</body>
+</html>
