@@ -114,10 +114,9 @@ var grid = {
 
         columnOfSelectedCell = 0;
         for (let column=0; column<gridArray[0].length; column++) {
-            betweenLeftAndRight = false;
             leftBorder = gridArray[0][column]['leftBorder'];
             rightBorder = gridArray[0][column]['rightBorder'];
-            if ((inputX > leftBorder) && (inputY < rightBorder)) {
+            if ((inputX > leftBorder) && (inputX < rightBorder)) {
                 columnOfSelectedCell = column;
             }
         }
@@ -128,7 +127,16 @@ var grid = {
             gridArray[rowOfSelectedCell][columnOfSelectedCell]['rightBorder'] - gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
             gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder'] - gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
 
+        // console.log("X:", inputX, "\nY: ", inputY); 
+        // console.log("Top Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
+        // console.log("Bottom Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder']);
+        // console.log("Left Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder']);
+        // console.log("Right Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['rightBorder']);
+        // console.log("Cell row: ", rowOfSelectedCell, "\nCell column: ", columnOfSelectedCell)
+
+
     }
+
 }
 
 
