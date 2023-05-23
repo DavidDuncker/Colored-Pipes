@@ -15,9 +15,10 @@ canvas {
 function startGame() {
     myGameArea.start();
     canvassGrid = grid;
-    canvassGrid.initializeGrid(10, 15, myGameArea.canvas);
+    canvassGrid.initializeGrid(7, 15, myGameArea.canvas);
     canvassGrid.getCells();
     canvassGrid.createBorders(borderwidth=3);
+    myGameArea.canvas.addEventListener("click", (event) => { console.log(event); canvassGrid.getCellSurroundingXandYcoordinate(event.x, event.y) } )
 }
 
 var myGameArea = {
@@ -95,6 +96,37 @@ var grid = {
             context.fillRect(gridArray[0][column]['rightBorder'] - borderwidth/2, 0, borderwidth, canvas.height);
 
         }
+
+    },
+
+    getCellSurroundingXandYcoordinate : function(inputX, inputY) {
+        gridArray = self.gridArray;
+
+        rowOfSelectedCell = 0;
+        for (let row=0; row<gridArray.length; row++) {
+            topBorder = gridArray[row][0]['topBorder'];
+            bottomBorder = gridArray[row][0]['bottomBorder'];
+            if ((inputY > topBorder) && (inputY < bottomBorder)) {
+                rowOfSelectedCell = row;
+            }
+
+        }
+
+        columnOfSelectedCell = 0;
+        for (let column=0; column<gridArray[0].length; column++) {
+            betweenLeftAndRight = false;
+            leftBorder = gridArray[0][column]['leftBorder'];
+            rightBorder = gridArray[0][column]['rightBorder'];
+            if ((inputX > leftBorder) && (inputY < rightBorder)) {
+                columnOfSelectedCell = column;
+            }
+        }
+
+        context = self.canvas.getContext("2d")
+        context.fillRect(gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
+            gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder'], 
+            gridArray[rowOfSelectedCell][columnOfSelectedCell]['rightBorder'] - gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
+            gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder'] - gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
 
     }
 }
