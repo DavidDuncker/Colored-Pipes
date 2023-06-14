@@ -64,7 +64,7 @@ class Grid {
         for (let i=0; i<numberOfRows; i++) {
             gridArray.push([]);
             for(let j=0; j<numberOfColumns; j++) {
-                var cell = new Cell(i, j, rowSize, columnSize);
+                var cell = new Cell(this.canvas, i, j, rowSize, columnSize);
                 gridArray[i].push(cell);
             }
         }
@@ -90,12 +90,12 @@ class Grid {
         for (let row=0;row<gridArray.length;row++) {
             console.log("Row: ", row)
             console.log("Top Border: ", gridArray[row][0]['topBorder'])
-            context.fillRect(0, gridArray[row][0]['topBorder'] - borderwidth/2, canvas.width, borderwidth);
+            context.fillRect(0, gridArray[row][0]['topBorder'] - borderwidth, canvas.width, borderwidth);
             // context.fillRect(0, gridArray[row][0]['bottomBorder'] - borderwidth/2, canvas.width, borderwidth);
 
         }
         for (let column=0;column<gridArray[0].length;column++) {
-            context.fillRect(gridArray[0][column]['leftBorder'] - borderwidth/2, 0, borderwidth, canvas.height);
+            context.fillRect(gridArray[0][column]['leftBorder'], 0, borderwidth, canvas.height);
             // context.fillRect(gridArray[0][column]['rightBorder'] - borderwidth/2, 0, borderwidth, canvas.height);
 
         }
@@ -103,32 +103,34 @@ class Grid {
     }
 
     getCellFromPoint(inputX, inputY) {
-        gridArray = self.gridArray;
+        var gridArray = this.gridArray;
 
-        rowOfSelectedCell = 0;
+        var rowOfSelectedCell = 0;
         for (let row=0; row<gridArray.length; row++) {
-            topBorder = gridArray[row][0]['topBorder'];
-            bottomBorder = gridArray[row][0]['bottomBorder'];
+            var topBorder = gridArray[row][0]['topBorder'];
+            var bottomBorder = gridArray[row][0]['bottomBorder'];
             if ((inputY >= topBorder) && (inputY <= bottomBorder)) {
                 rowOfSelectedCell = row;
             }
         }
 
-        columnOfSelectedCell = 0;
+        var columnOfSelectedCell = 0;
         for (let column=0; column<gridArray[0].length; column++) {
-            leftBorder = gridArray[0][column]['leftBorder'];
-            rightBorder = gridArray[0][column]['rightBorder'];
+            var leftBorder = gridArray[0][column]['leftBorder'];
+            var rightBorder = gridArray[0][column]['rightBorder'];
             if ((inputX >= leftBorder) && (inputX <= rightBorder)) {
                 columnOfSelectedCell = column;
             }
             console.log(column, leftBorder, inputX, rightBorder, columnOfSelectedCell)
         }
 
-        context = self.canvas.getContext("2d")
+        var context = this.canvas.getContext("2d")
         context.fillRect(gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
             gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder'], 
-            gridArray[rowOfSelectedCell][columnOfSelectedCell]['rightBorder'] - gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
-            gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder'] - gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
+            gridArray[rowOfSelectedCell][columnOfSelectedCell]['rightBorder'] 
+            - gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
+            gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder'] 
+            - gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
 
         console.log("X:", inputX, "\nY: ", inputY); 
         console.log("Top Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
@@ -147,15 +149,243 @@ class Cell {
     rightBorder = 0;
     topBorder = 0;
     bottomBorder = 0;
-    display = null;
-    constructor(rowNumber, columnNumber, rowSize, columnSize) {
-        self.topBorder = rowNumber * rowSize;
-        self.bottomBorder = (rowNumber + 1) * rowSize;
-        self.leftBorder = columnNumber * columnSize,
-        self.rightBorder = (columnNumber + 1) * columnSize
+    pipeDisplay = null;
+    canvas = null;
+    
+    constructor(canvas, rowNumber, columnNumber, rowSize, columnSize) {
+        this.canvas = canvas
+        this.topBorder = rowNumber * rowSize;
+        this.bottomBorder = (rowNumber + 1) * rowSize;
+        this.leftBorder = columnNumber * columnSize,
+        this.rightBorder = (columnNumber + 1) * columnSize
     }
 
 }
+
+class PipeDisplayInsideCell {
+    pipe1 = { 
+        entranceSide: null,
+        exitSide: null,
+        color: null
+    };
+
+    pipe2 = {
+        entranceSide: null,
+        exitSide: null,
+        color: "green"
+    };
+
+    leftBorder = 0;
+    rightBorder = 0;
+    topBorder = 0;
+    bottomBorder = 0;
+    canvas = null;
+    keyPointsForDrawingPipes = {};
+
+    pipe1Entrance = 'left'; 
+    pipe1Exit = 'right';
+    pipe2Entrance = 'top';
+    pipe2Exit = 'bottom';
+
+    constructor(cell, pipe1Entrance, pipe1Exit, pipe2Entrance, pipe2Exit) {
+        this.leftBorder = cell.leftBorder;
+        this.rightBorder = cell.rightBorder;
+        this.topBorder = cell.topBorder;
+        this.bottomBorder = cell.bottomBorder;
+        this.canvas = cell.canvas;
+
+        pipeDirections = [pipe1Entrance, pipe1Exit, pipe2Entrance, pipe2Exit]
+        pipeDirections.forEach(elementFromTopLoop => {
+            remainingElements = pipeDirections.filter( (elementFromInnerLoop, index) => { return elementFromInnerLoop != elementFromTopLoop } )
+            remainingElements.forEach(elementFromInnerLoop => {
+                if (elementFromTopLoop == elementFromInnerLoop) {
+                    console.log("Error! Two overlapping pipes!")
+                }
+            })
+        });
+    };
+
+    getKeyPointsForDrawingPipes() {
+        pipeWidthAsPercentage = 0.3;
+        pipeBorderWidthAsPercentage = 0.1;
+        pipeLengthBeforeCurvingOverToPerpendicularSide = 0.3;
+
+        cellWidth = this.rightBorder - this.leftBorder;
+        cellHeight = this.bottomBorder - this.topBorder;
+
+        //The points needed for drawing a pipe from the top of the cell
+        {
+            this.keyPointsForDrawingPipes['top']['center'] = {
+                'x': (this.leftBorder + this.rightBorder)/2, 
+                'y': this.topBorder
+            };
+            this.keyPointsForDrawingPipes['top']['left']['pipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.topBorder
+            }
+            this.keyPointsForDrawingPipes['top']['left']['pipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.topBorder
+            }
+            this.keyPointsForDrawingPipes['top']['right']['pipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.topBorder
+            }
+            this.keyPointsForDrawingPipes['top']['right']['pipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.topBorder
+            }
+            this.keyPointsForDrawingPipes['top']['left']['lowerPipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+            this.keyPointsForDrawingPipes['top']['left']['lowerPipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+            this.keyPointsForDrawingPipes['top']['right']['lowerPipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+            this.keyPointsForDrawingPipes['top']['right']['lowerPipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+        }
+        
+        //The points needed for drawing a pipe from the bottom of the cell
+        {
+            this.keyPointsForDrawingPipes['bottom']['center'] = {
+                'x': (this.leftBorder + this.rightBorder)/2, 
+                'y': this.bottomBorder
+            };
+            this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.bottomBorder
+            }
+            this.keyPointsForDrawingPipes['bottom']['left']['pipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.bottomBorder
+            }
+            this.keyPointsForDrawingPipes['bottom']['right']['pipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.bottomBorder
+            }
+            this.keyPointsForDrawingPipes['bottom']['right']['pipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.bottomBorder
+            }
+            this.keyPointsForDrawingPipes['bottom']['left']['upperPipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+            this.keyPointsForDrawingPipes['bottom']['left']['upperPipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+            this.keyPointsForDrawingPipes['bottom']['right']['upperPipeEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+            this.keyPointsForDrawingPipes['bottom']['right']['upperPipeBorderEdge'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
+            }
+        }
+        
+        //The points needed for drawing a pipe from the left of the cell
+        {
+            this.keyPointsForDrawingPipes['left']['center'] = {
+                'x': this.leftBorder,
+                'y': (this.topBorder + this.bottomBorder)/2, 
+            };
+            this.keyPointsForDrawingPipes['left']['top']['pipeEdge'] = {
+                'x': this.leftBorder,
+                'y': this.keyPointsForDrawingPipes['left']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['left']['top']['pipeBorderEdge'] = {
+                'x': this.leftBorder,
+                'y': this.keyPointsForDrawingPipes['left']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            }
+            this.keyPointsForDrawingPipes['left']['bottom']['pipeEdge'] = {
+                'x': this.leftBorder,
+                'y': this.keyPointsForDrawingPipes['left']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['left']['bottom']['pipeBorderEdge'] = {
+                'x': this.leftBorder,
+                'y': this.keyPointsForDrawingPipes['left']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            }
+            this.keyPointsForDrawingPipes['left']['top']['innerPipeEdge'] = {
+                'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['left']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['left']['top']['innerPipeBorderEdge'] = {
+                'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['left']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            }
+            this.keyPointsForDrawingPipes['left']['bottom']['innerPipeEdge'] = {
+                'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['left']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['left']['bottom']['innerPipeBorderEdge'] = {
+                'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['left']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            }
+        }
+        
+        //The points needed for drawing a pipe from the right of the cell
+        {
+            this.keyPointsForDrawingPipes['right']['center'] = {
+                'x': this.rightBorder,
+                'y': (this.topBorder + this.bottomBorder)/2, 
+            };
+            this.keyPointsForDrawingPipes['right']['top']['pipeEdge'] = {
+                'x': this.rightBorder,
+                'y': this.keyPointsForDrawingPipes['right']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['right']['top']['pipeBorderEdge'] = {
+                'x': this.rightBorder,
+                'y': this.keyPointsForDrawingPipes['right']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            }
+            this.keyPointsForDrawingPipes['right']['bottom']['pipeEdge'] = {
+                'x': this.rightBorder,
+                'y': this.keyPointsForDrawingPipes['right']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['right']['bottom']['pipeBorderEdge'] = {
+                'x': this.rightBorder,
+                'y': this.keyPointsForDrawingPipes['right']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            }
+            this.keyPointsForDrawingPipes['right']['top']['innerPipeEdge'] = {
+                'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['right']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['right']['top']['innerPipeBorderEdge'] = {
+                'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['right']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            }
+            this.keyPointsForDrawingPipes['right']['bottom']['innerPipeEdge'] = {
+                'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['right']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+            }
+            this.keyPointsForDrawingPipes['right']['bottom']['innerPipeBorderEdge'] = {
+                'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
+                'y': this.keyPointsForDrawingPipes['right']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            }
+        }
+        
+
+        
+
+
+    }
+
+    drawPipes() {
+
+    }
+
+
+}
+
 function createStraightPipe(angle, color) {
     this.width = 300;
     this.height = 100;
