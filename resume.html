@@ -16,13 +16,16 @@ function startGame() {
     myGameArea.start();
     grid = new Grid(7, 15, myGameArea.canvas);
     grid.createBorders(borderwidth=3);
-    myGameArea.canvas.addEventListener(
-        "click", 
-        (event) => { 
-            console.log(event); 
-            grid.getCellFromPoint(event.x, event.y)
-        } 
-    )
+    // myGameArea.canvas.addEventListener(
+    //     "click", 
+    //     (event) => { 
+    //         console.log(event); 
+    //         grid.getCellFromPoint(event.x, event.y)
+    //     } 
+    // )
+    console.log(grid.gridArray[0][0])
+    console.log(grid.gridArray[0][0].pipeDisplay)
+    grid.gridArray[0][0].pipeDisplay.drawPipes(['bottom']);
 }
 
 var myGameArea = {
@@ -42,8 +45,6 @@ getInfoOnCell = function(rowNumber, columnNumber, rowSize, columnSize) {
             leftBorder : columnNumber * columnSize,
             rightBorder : (columnNumber + 1) * columnSize
         }
-
-        // console.log(cellData)
 
         return cellData
     }
@@ -77,7 +78,6 @@ class Grid {
         this.numberOfColumns = number_of_columns;
         this.canvas = canvas;
         this.gridArray = this.getCells();
-        console.log(this.gridArray)
     }
 
 
@@ -88,8 +88,6 @@ class Grid {
         var gridArray = this.gridArray
 
         for (let row=0;row<gridArray.length;row++) {
-            console.log("Row: ", row)
-            console.log("Top Border: ", gridArray[row][0]['topBorder'])
             context.fillRect(0, gridArray[row][0]['topBorder'] - borderwidth, canvas.width, borderwidth);
             // context.fillRect(0, gridArray[row][0]['bottomBorder'] - borderwidth/2, canvas.width, borderwidth);
 
@@ -121,7 +119,6 @@ class Grid {
             if ((inputX >= leftBorder) && (inputX <= rightBorder)) {
                 columnOfSelectedCell = column;
             }
-            console.log(column, leftBorder, inputX, rightBorder, columnOfSelectedCell)
         }
 
         var context = this.canvas.getContext("2d")
@@ -131,14 +128,6 @@ class Grid {
             - gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
             gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder'] 
             - gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
-
-        console.log("X:", inputX, "\nY: ", inputY); 
-        console.log("Top Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
-        console.log("Bottom Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder']);
-        console.log("Left Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder']);
-        console.log("Right Border: ", gridArray[rowOfSelectedCell][columnOfSelectedCell]['rightBorder']);
-        console.log("Cell row: ", rowOfSelectedCell, "\nCell column: ", columnOfSelectedCell)
-
 
     }
 
@@ -158,6 +147,7 @@ class Cell {
         this.bottomBorder = (rowNumber + 1) * rowSize;
         this.leftBorder = columnNumber * columnSize,
         this.rightBorder = (columnNumber + 1) * columnSize
+        this.pipeDisplay = new PipeDisplayInsideCell(this, null, null, null, null)
     }
 
 }
@@ -180,6 +170,7 @@ class PipeDisplayInsideCell {
     topBorder = 0;
     bottomBorder = 0;
     canvas = null;
+    context = null;
     keyPointsForDrawingPipes = {};
 
     pipe1Entrance = 'left'; 
@@ -193,193 +184,404 @@ class PipeDisplayInsideCell {
         this.topBorder = cell.topBorder;
         this.bottomBorder = cell.bottomBorder;
         this.canvas = cell.canvas;
+        this.context = cell.canvas.getContext("2d");
 
-        pipeDirections = [pipe1Entrance, pipe1Exit, pipe2Entrance, pipe2Exit]
+        var pipeDirections = [pipe1Entrance, pipe1Exit, pipe2Entrance, pipe2Exit]
         pipeDirections.forEach(elementFromTopLoop => {
-            remainingElements = pipeDirections.filter( (elementFromInnerLoop, index) => { return elementFromInnerLoop != elementFromTopLoop } )
+            var remainingElements = pipeDirections.filter( (elementFromInnerLoop, index) => { return elementFromInnerLoop != elementFromTopLoop } )
             remainingElements.forEach(elementFromInnerLoop => {
                 if (elementFromTopLoop == elementFromInnerLoop) {
                     console.log("Error! Two overlapping pipes!")
                 }
             })
         });
+
+        this.getKeyPointsForDrawingPipes();
     };
 
     getKeyPointsForDrawingPipes() {
-        pipeWidthAsPercentage = 0.3;
-        pipeBorderWidthAsPercentage = 0.1;
-        pipeLengthBeforeCurvingOverToPerpendicularSide = 0.3;
+        var pipeWidthAsPercentage = 0.3;
+        var pipeBorderWidthAsPercentage = 0.1;
+        var pipeLengthBeforeCurvingOverToPerpendicularSide = 0.3;
 
-        cellWidth = this.rightBorder - this.leftBorder;
-        cellHeight = this.bottomBorder - this.topBorder;
+        var cellWidth = this.rightBorder - this.leftBorder;
+        var cellHeight = this.bottomBorder - this.topBorder;
 
         //The points needed for drawing a pipe from the top of the cell
         {
+            this.keyPointsForDrawingPipes['top'] = {};
             this.keyPointsForDrawingPipes['top']['center'] = {
                 'x': (this.leftBorder + this.rightBorder)/2, 
                 'y': this.topBorder
             };
-            this.keyPointsForDrawingPipes['top']['left']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['top']['counterclockwise'] = {};
+            this.keyPointsForDrawingPipes['top']['counterclockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['top']['counterclockwise']['inner'] = {};
+
+            this.keyPointsForDrawingPipes['top']['counterclockwise']['outer']['pipe'] = {
                 'x': this.keyPointsForDrawingPipes['top']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
                 'y': this.topBorder
             }
-            this.keyPointsForDrawingPipes['top']['left']['pipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['top']['counterclockwise']['outer']['border'] = {
+                'x': this.keyPointsForDrawingPipes['top']['counterclockwise']['outer']['pipe']['x'] - cellWidth * pipeBorderWidthAsPercentage,
                 'y': this.topBorder
             }
-            this.keyPointsForDrawingPipes['top']['right']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['top']['clockwise'] = {};
+            this.keyPointsForDrawingPipes['top']['clockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['top']['clockwise']['inner'] = {};
+            this.keyPointsForDrawingPipes['top']['clockwise']['outer']['pipe'] = {
                 'x': this.keyPointsForDrawingPipes['top']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
                 'y': this.topBorder
             }
-            this.keyPointsForDrawingPipes['top']['right']['pipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['top']['clockwise']['outer']['border'] = {
+                'x': this.keyPointsForDrawingPipes['top']['clockwise']['outer']['pipe']['x'] + cellWidth * pipeBorderWidthAsPercentage,
                 'y': this.topBorder
             }
-            this.keyPointsForDrawingPipes['top']['left']['lowerPipeEdge'] = {
+            this.keyPointsForDrawingPipes['top']['counterclockwise']['inner']['pipe'] = {
                 'x': this.keyPointsForDrawingPipes['top']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
                 'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
-            this.keyPointsForDrawingPipes['top']['left']['lowerPipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['top']['counterclockwise']['inner']['border'] = {
+                'x': this.keyPointsForDrawingPipes['top']['counterclockwise']['outer']['border']['x'],
                 'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
-            this.keyPointsForDrawingPipes['top']['right']['lowerPipeEdge'] = {
+            this.keyPointsForDrawingPipes['top']['clockwise']['inner']['pipe'] = {
                 'x': this.keyPointsForDrawingPipes['top']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
                 'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
-            this.keyPointsForDrawingPipes['top']['right']['lowerPipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['top']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['top']['clockwise']['inner']['border'] = {
+                'x': this.keyPointsForDrawingPipes['top']['clockwise']['outer']['border']['x'] + cellWidth * pipeBorderWidthAsPercentage,
                 'y': this.topBorder + cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
         }
         
         //The points needed for drawing a pipe from the bottom of the cell
         {
+            this.keyPointsForDrawingPipes['bottom'] = {};
             this.keyPointsForDrawingPipes['bottom']['center'] = {
                 'x': (this.leftBorder + this.rightBorder)/2, 
                 'y': this.bottomBorder
             };
-            this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['bottom']['clockwise'] = {};
+            this.keyPointsForDrawingPipes['bottom']['clockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['bottom']['clockwise']['inner'] = {};
+            this.keyPointsForDrawingPipes['bottom']['clockwise']['outer']['pipe'] = {
                 'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
                 'y': this.bottomBorder
             }
-            this.keyPointsForDrawingPipes['bottom']['left']['pipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['bottom']['clockwise']['outer']['border'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['counterclockwise']['outer']['pipe']['x'] - cellWidth * pipeBorderWidthAsPercentage,
                 'y': this.bottomBorder
             }
-            this.keyPointsForDrawingPipes['bottom']['right']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise'] = {};
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise'] = {};
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise']['inner'] = {};
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise']['outer']['pipe'] = {
                 'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
                 'y': this.bottomBorder
             }
-            this.keyPointsForDrawingPipes['bottom']['right']['pipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise']['outer']['border'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['counterclockwise']['outer']['pipe']['x'] + cellWidth * pipeBorderWidthAsPercentage,
                 'y': this.bottomBorder
             }
-            this.keyPointsForDrawingPipes['bottom']['left']['upperPipeEdge'] = {
-                'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+            this.keyPointsForDrawingPipes['bottom']['clockwise']['inner']['pipe'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['clockwise']['outer']['pipe'],
                 'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
-            this.keyPointsForDrawingPipes['bottom']['left']['upperPipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['bottom']['clockwise']['inner']['border'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['clockwise']['outer']['border'],
                 'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
-            this.keyPointsForDrawingPipes['bottom']['right']['upperPipeEdge'] = {
-                'x': this.keyPointsForDrawingPipes['bottom']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise']['inner']['pipe'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['counterclockwise']['outer']['pipe']['x'],
                 'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
-            this.keyPointsForDrawingPipes['bottom']['right']['upperPipeBorderEdge'] = {
-                'x': this.keyPointsForDrawingPipes['bottom']['left']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+            this.keyPointsForDrawingPipes['bottom']['counterclockwise']['inner']['border'] = {
+                'x': this.keyPointsForDrawingPipes['bottom']['counterclockwise']['outer']['border']['x'],
                 'y': this.bottomBorder - cellHeight * pipeLengthBeforeCurvingOverToPerpendicularSide
             }
         }
         
         //The points needed for drawing a pipe from the left of the cell
         {
+            this.keyPointsForDrawingPipes['left'] = {};
             this.keyPointsForDrawingPipes['left']['center'] = {
                 'x': this.leftBorder,
                 'y': (this.topBorder + this.bottomBorder)/2, 
             };
-            this.keyPointsForDrawingPipes['left']['top']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['left']['clockwise'] = {};
+            this.keyPointsForDrawingPipes['left']['clockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['left']['clockwise']['inner'] = {};
+            this.keyPointsForDrawingPipes['left']['clockwise']['outer']['pipe'] = {
                 'x': this.leftBorder,
-                'y': this.keyPointsForDrawingPipes['left']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['left']['center']['y'] - cellHeight * pipeWidthAsPercentage / 2,
             }
-            this.keyPointsForDrawingPipes['left']['top']['pipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['left']['clockwise']['outer']['border'] = {
                 'x': this.leftBorder,
-                'y': this.keyPointsForDrawingPipes['left']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['left']['clockwise']['outer']['pipe']['y'] - cellHeight * pipeBorderWidthAsPercentage,
             }
-            this.keyPointsForDrawingPipes['left']['bottom']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['left']['counterclockwise'] = {};
+            this.keyPointsForDrawingPipes['left']['counterclockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['left']['counterclockwise']['inner'] = {};
+            this.keyPointsForDrawingPipes['left']['counterclockwise']['outer']['pipe'] = {
                 'x': this.leftBorder,
-                'y': this.keyPointsForDrawingPipes['left']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['left']['center']['y'] + cellHeight * pipeWidthAsPercentage / 2,
             }
-            this.keyPointsForDrawingPipes['left']['bottom']['pipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['left']['counterclockwise']['outer']['border'] = {
                 'x': this.leftBorder,
-                'y': this.keyPointsForDrawingPipes['left']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['left']['counterclockwise']['outer']['pipe']['y'] + cellHeight * pipeBorderWidthAsPercentage,
             }
-            this.keyPointsForDrawingPipes['left']['top']['innerPipeEdge'] = {
+            this.keyPointsForDrawingPipes['left']['clockwise']['inner']['pipe'] = {
                 'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['left']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['left']['clockwise']['outer']['pipe']['y'],
             }
-            this.keyPointsForDrawingPipes['left']['top']['innerPipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['left']['clockwise']['inner']['border'] = {
                 'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['left']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['left']['clockwise']['outer']['border']['y'],
             }
-            this.keyPointsForDrawingPipes['left']['bottom']['innerPipeEdge'] = {
+            this.keyPointsForDrawingPipes['left']['counterclockwise']['inner']['pipe'] = {
                 'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['left']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['left']['counterclockwise']['outer']['pipe']['y'],
             }
-            this.keyPointsForDrawingPipes['left']['bottom']['innerPipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['left']['counterclockwise']['inner']['border'] = {
                 'x': this.leftBorder + cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['left']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['left']['counterclockwise']['outer']['border']['y'],
             }
         }
         
         //The points needed for drawing a pipe from the right of the cell
         {
+            this.keyPointsForDrawingPipes['right'] = {};
             this.keyPointsForDrawingPipes['right']['center'] = {
                 'x': this.rightBorder,
                 'y': (this.topBorder + this.bottomBorder)/2, 
             };
-            this.keyPointsForDrawingPipes['right']['top']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['right']['counterclockwise'] = {};
+            this.keyPointsForDrawingPipes['right']['counterclockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['right']['counterclockwise']['inner'] = {};
+
+            this.keyPointsForDrawingPipes['right']['counterclockwise']['outer']['pipe'] = {
                 'x': this.rightBorder,
-                'y': this.keyPointsForDrawingPipes['right']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['right']['center']['y'] - cellHeight * pipeWidthAsPercentage / 2,
             }
-            this.keyPointsForDrawingPipes['right']['top']['pipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['right']['counterclockwise']['outer']['border'] = {
                 'x': this.rightBorder,
-                'y': this.keyPointsForDrawingPipes['right']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['right']['counterclockwise']['outer']['pipe']['y'] - cellHeight * pipeBorderWidthAsPercentage,
             }
-            this.keyPointsForDrawingPipes['right']['bottom']['pipeEdge'] = {
+            this.keyPointsForDrawingPipes['right']['clockwise'] = {};
+            this.keyPointsForDrawingPipes['right']['clockwise']['outer'] = {};
+            this.keyPointsForDrawingPipes['right']['clockwise']['inner'] = {};
+            this.keyPointsForDrawingPipes['right']['clockwise']['outer']['pipe'] = {
                 'x': this.rightBorder,
-                'y': this.keyPointsForDrawingPipes['right']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['right']['center']['y'] + cellHeight * pipeWidthAsPercentage / 2,
             }
-            this.keyPointsForDrawingPipes['right']['bottom']['pipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['right']['clockwise']['outer']['border'] = {
                 'x': this.rightBorder,
-                'y': this.keyPointsForDrawingPipes['right']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['right']['clockwise']['outer']['pipe']['y'] + cellHeight * pipeBorderWidthAsPercentage,
             }
-            this.keyPointsForDrawingPipes['right']['top']['innerPipeEdge'] = {
+            this.keyPointsForDrawingPipes['right']['counterclockwise']['inner']['pipe'] = {
                 'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['right']['center']['x'] - cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['right']['center']['y'] - cellHeight * pipeWidthAsPercentage / 2,
             }
-            this.keyPointsForDrawingPipes['right']['top']['innerPipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['right']['counterclockwise']['inner']['border'] = {
                 'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['right']['top']['pipeEdge']['x'] - cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['right']['counterclockwise']['outer']['border']['y'],
             }
-            this.keyPointsForDrawingPipes['right']['bottom']['innerPipeEdge'] = {
+            this.keyPointsForDrawingPipes['right']['clockwise']['inner']['pipe'] = {
                 'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['right']['center']['x'] + cellWidth * pipeWidthAsPercentage / 2,
+                'y': this.keyPointsForDrawingPipes['right']['clockwise']['inner']['pipe']['y'],
             }
-            this.keyPointsForDrawingPipes['right']['bottom']['innerPipeBorderEdge'] = {
+            this.keyPointsForDrawingPipes['right']['clockwise']['inner']['border'] = {
                 'x': this.rightBorder - cellWidth * pipeLengthBeforeCurvingOverToPerpendicularSide,
-                'y': this.keyPointsForDrawingPipes['right']['bottom']['pipeEdge']['x'] + cellWidth * pipeBorderWidthAsPercentage,
+                'y': this.keyPointsForDrawingPipes['right']['clockwise']['outer']['border']['y'],
             }
         }
         
+    }
 
-        
+    drawPipes(listOfDirectionsThatPipeTravels) {
+        var pipeColor = 'green'
+        if ( listOfDirectionsThatPipeTravels.includes("top") ) {
+            //Fill in pipe area
+            var topLeftX = this.keyPointsForDrawingPipes["top"]["left"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["top"]["left"]["pipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["top"]["left"]["lowerPipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["top"]["right"]["pipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = pipeColor
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+
+            //Fill in left border
+            var topLeftX = this.keyPointsForDrawingPipes["top"]["left"]["pipeBorderEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["top"]["left"]["pipeBorderEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["top"]["left"]["lowerPipeBorderEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["top"]["left"]["pipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+
+            //Fill in right border
+            var topLeftX = this.keyPointsForDrawingPipes["top"]["right"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["top"]["right"]["pipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["top"]["right"]["lowerPipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["top"]["right"]["pipeBorderEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+        }
+
+        if ( listOfDirectionsThatPipeTravels.includes("left") ) {
+            //Fill in pipe area
+            var topLeftX = this.keyPointsForDrawingPipes["left"]["top"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["left"]["top"]["pipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["left"]["bottom"]["pipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["left"]["top"]["innerPipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = pipeColor;
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+
+            //Fill in top border
+            var topLeftX = this.keyPointsForDrawingPipes["left"]["top"]["pipeBorderEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["left"]["top"]["pipeBorderEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["left"]["top"]["pipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["left"]["top"]["innerPipeBorderEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+
+            //Fill in bottom border
+            var topLeftX = this.keyPointsForDrawingPipes["left"]["bottom"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["left"]["bottom"]["pipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["left"]["bottom"]["pipeBorderEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["left"]["bottom"]["innerPipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+            
+        }
+
+        if ( listOfDirectionsThatPipeTravels.includes("right") ) {
+            //Fill in pipe area
+            var topLeftX = this.keyPointsForDrawingPipes["right"]["top"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["right"]["top"]["pipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["right"]["bottom"]["pipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["right"]["top"]["innerPipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = pipeColor;
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+
+            //Fill in top border
+            var topLeftX = this.keyPointsForDrawingPipes["right"]["top"]["pipeBorderEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["right"]["top"]["pipeBorderEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["right"]["top"]["pipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["right"]["top"]["innerPipeBorderEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+
+            //Fill in bottom border
+            var topLeftX = this.keyPointsForDrawingPipes["right"]["bottom"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["right"]["bottom"]["pipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["right"]["bottom"]["pipeBorderEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["right"]["bottom"]["innerPipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+            
+        }
+
+        if ( listOfDirectionsThatPipeTravels.includes("bottom") ) {
+            //Fill in pipe area
+            var topLeftX = this.keyPointsForDrawingPipes["bottom"]["left"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["bottom"]["left"]["upperPipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["bottom"]["left"]["pipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["bottom"]["right"]["pipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = pipeColor;
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+
+            //Fill in left border
+            var topLeftX = this.keyPointsForDrawingPipes["bottom"]["left"]["pipeBorderEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["bottom"]["left"]["upperPipeBorderEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["bottom"]["left"]["pipeBorderEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["bottom"]["left"]["pipeEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+
+            //Fill in right border
+            var topLeftX = this.keyPointsForDrawingPipes["bottom"]["right"]["pipeEdge"]['x']
+            var topLeftY = this.keyPointsForDrawingPipes["bottom"]["right"]["upperPipeEdge"]['y']
+            var height = this.keyPointsForDrawingPipes["bottom"]["right"]["pipeEdge"]['y'] - topLeftY
+            var width = this.keyPointsForDrawingPipes["bottom"]["right"]["pipeBorderEdge"]['x'] - topLeftX
+            this.context.fillStyle = 'black';
+            this.context.fillRect(topLeftX, topLeftY, width, height)
+            console.log(topLeftX, topLeftY, width, height)
+            
+        }
 
 
     }
 
-    drawPipes() {
+    drawPipeCenter(listOfDirectionsThatPipeTravels) {
+        var circularCenter = {x: null, y: null};
+        var outerBorder = {x: null, y: null};
+        var outerPipe = {x: null, y: null};
+        var innerBorder = {x: null, y: null};
+        var startingAngle = null;
+
+        var pipeGoesLeft = listOfDirectionsThatPipeTravels.includes("left");
+        var pipeGoesUp = listOfDirectionsThatPipeTravels.includes("top");
+        var pipeGoesDown = listOfDirectionsThatPipeTravels.includes("bottom");
+        var pipeGoesRight = listOfDirectionsThatPipeTravels.includes("right");
+
+        function drawCenter() {
+
+        }
+        
+        if ( pipeGoesLeft && pipeGoesUp ) {
+            circularCenter = {x: this.leftBorder, y: this.topBorder};
+            startingAngle = 0;
+            outerBorder = {x: null, y: null};
+            outerPipe = {x: null, y: null};
+            innerBorder = {x: null, y: null};
+        }
+
+        if ( pipeGoesLeft && pipeGoesDown ) {
+            circularCenter = {x: this.leftBorder, y: this.bottomBorder};
+            startingAngle = 1.5 * Math.PI
+            outerBorder = {x: null, y: null};
+            outerPipe = {x: null, y: null};
+            innerBorder = {x: null, y: null};
+        }
+        if ( pipeGoesRight && pipeGoesUp ) {
+            circularCenter = {x: this.rightBorder, y: this.topBorder};
+            startingAngle = 0.5 * Math.PI
+            outerBorder = {x: null, y: null};
+            outerPipe = {x: null, y: null};
+            innerBorder = {x: null, y: null};
+        }
+
+        if ( pipeGoesRight && pipeGoesDown ) {
+            circularCenter = {x: this.rightBorder, y: this.bottomBorder};
+            startingAngle = 1 * Math.PI
+            outerBorder = {x: null, y: null};
+            outerPipe = {x: null, y: null};
+            innerBorder = {x: null, y: null};
+        }
+
+        if ( pipeGoesLeft && pipeGoesRight ) {
+            circularCenter = {x: null, y: null};
+            outerBorder = {x: null, y: null};
+            outerPipe = {x: null, y: null};
+            innerBorder = {x: null, y: null};
+        }
+
+        if ( pipeGoesUp && pipeGoesDown ) {
+            circularCenter = {x: null, y: null};
+            outerBorder = {x: null, y: null};
+            outerPipe = {x: null, y: null};
+            innerBorder = {x: null, y: null};
+        }
+
 
     }
 
