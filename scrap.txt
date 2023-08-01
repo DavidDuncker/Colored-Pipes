@@ -1,0 +1,22 @@
+
+
+getInfoOnCell = function(rowNumber, columnNumber, rowSize, columnSize) {
+        cellData = {
+            topBorder : rowNumber * rowSize,
+            bottomBorder : (rowNumber + 1) * rowSize,
+            leftBorder : columnNumber * columnSize,
+            rightBorder : (columnNumber + 1) * columnSize
+        }
+
+        return cellData
+    }
+
+function createStraightPipe(angle, color) {
+    this.width = 300;
+    this.height = 100;
+    this.x = 100
+    this.y = 100
+    context = canvasArea.context;
+    context.fillStyle = "red";
+    context.fillRect(this.x, this.y, this.width, this.height)
+}
