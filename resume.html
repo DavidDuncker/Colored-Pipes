@@ -23,20 +23,82 @@
                 document.body.insertBefore(this.canvas, document.body.childNodes[0]);
             }
         }
-
+        
         function openCanvas() {
             canvasArea.open();
             var grid = new canvasInnerGrid(7, 15, canvasArea.canvas);
-            grid.createBorders(3, 'black')
+            canvasArea.canvas.addEventListener("mousedown", (e) => {})
+            canvasArea.canvas.addEventListener("mousemove", (e) => {
+                grid.getCellFromPoint(e.offsetX, e.offsetY)
+            })
+            canvasArea.canvas.addEventListener("mouseup", (e) => {})
+            canvasArea.canvas.addEventListener("onclick", (e) => {
+                inputConfig = getUserInputConfig();
+                if (inputConfig["solid_color_input"]) {
+                    var selected_row = grid.hoveredCell[0];
+                    var selected_column = grid.hoveredCell[1];
+                    grid.gridArray[selected_row][selected_column].pipeDisplay.drawSolidColor(inputConfig["color"])
+                }
+            })
+
+
+
+            // grid.createBorders(3, 'black')
             grid.gridArray[1][1].drawPipe("top","left","red");
 
         }
 
         window.openCanvas = openCanvas;
     </script>
+    <script src="jscolor.js"></script>
 
 
 <p>Canvas created.</p>
 
-</body>
+<p>Pick a color:</p>
+<form onsubmit="showFormData(this); return false;">
+
+    <p>
+        Pick a color
+        <button data-jscolor="{valueElement:'#color'}"></button>
+        <input id="color" value="FFA000" name="color" type="hidden">
+    </p>
+    <p>
+        Choose whether you want to fill a cell with a solid color, or connect solid colors together with gradient pipes<br>
+        <input type="radio" name="input_method" id="solid_color" value="color">
+        <label for="solid_color">Input solid color</label><br>
+
+        <input type="radio" name="input_method" id="gradient_pipe" value="pipe">
+        <label for="gradient_pipe">Input gradient pipe</label><br>
+
+    </p>
+
+    <input type="submit" value="Update">
+</form>
+
+
+<pre id="form-data"></pre>
+
+<script>
+// Helper function that displays submitted form data
+function showFormData(form) {
+    window.form = form
+    var lines = [];
+    window.form = {};
+
+    for (var i = 0; i < form.elements.length; i++) {
+        var e = form.elements[i];
+        console.log(e);
+        if (e.name && ((e.type == 'radio' && e.checked) || (e.type != 'radio'))) {
+            lines.push(e.name + ' = ' + e.value);
+            window.form[e.name] = e.value;
+        }
+    }
+
+
+    var out = document.querySelector('#form-data');
+    out.innerHTML = '';
+    out.appendChild(document.createTextNode(lines.join('\n')));
+}
+</script></body>
 </html>

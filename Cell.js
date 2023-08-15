@@ -21,11 +21,7 @@ class Cell {
     }
 
     drawPipe(direction1, direction2, color) {
-
-        this.pipeDisplay.drawPipeEdge(direction1, color);
-        this.pipeDisplay.drawPipeEdge(direction2, color);
-        this.pipeDisplay.drawPipeCenter(direction1, direction2, color)
-
+        this.pipeDisplay.drawPipe(direction1, direction2, color);
     }
 
     makeSelected() {

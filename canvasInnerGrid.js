@@ -6,7 +6,8 @@ class canvasInnerGrid {
     canvas = null;
     gridArray = [];
     selectedCell = null;
-    hoveredCell = null;
+    hoveredCell = [0, 0];
+    bgcolor = "#f1f1f1";
 
     getCells() {
         var rowSize = this.canvas.height/this.numberOfRows;
@@ -17,7 +18,7 @@ class canvasInnerGrid {
         for (let i=0; i<numberOfRows; i++) {
             gridArray.push([]);
             for(let j=0; j<numberOfColumns; j++) {
-                var cell = new Cell(this.canvas, i, j, rowSize, columnSize);
+                var cell = new Cell(this.canvas, i, j, rowSize, columnSize, this.bgcolor);
                 gridArray[i].push(cell);
             }
         }
@@ -55,32 +56,66 @@ class canvasInnerGrid {
     getCellFromPoint(inputX, inputY) {
         var gridArray = this.gridArray;
 
-        var rowOfSelectedCell = 0;
+        //Find which row of cells the mouse is in
+        var rowOfCell = -1;
         for (let row=0; row<gridArray.length; row++) {
             var topBorder = gridArray[row][0]['topBorder'];
             var bottomBorder = gridArray[row][0]['bottomBorder'];
-            if ((inputY >= topBorder) && (inputY <= bottomBorder)) {
-                rowOfSelectedCell = row;
+            if ((inputY >= topBorder+5) && (inputY <= bottomBorder-5)) {
+                rowOfCell = row;
+                console.log(topBorder, inputY, bottomBorder)
             }
         }
 
-        var columnOfSelectedCell = 0;
+        //Find which column of cells the mouse is in
+        var columnOfCell = -1;
         for (let column=0; column<gridArray[0].length; column++) {
             var leftBorder = gridArray[0][column]['leftBorder'];
             var rightBorder = gridArray[0][column]['rightBorder'];
-            if ((inputX >= leftBorder) && (inputX <= rightBorder)) {
-                columnOfSelectedCell = column;
+            if ((inputX >= leftBorder+5) && (inputX <= rightBorder-5)) {
+                columnOfCell = column;
             }
         }
+    
+        //Do something with every single cell
+        // for (let row=0; row<gridArray.length; row++) {
+        //     for (let column=0; column<gridArray[0].length; column++) {
 
-        var context = this.canvas.getContext("2d")
-        context.fillRect(gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
-            gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder'], 
-            gridArray[rowOfSelectedCell][columnOfSelectedCell]['rightBorder'] 
-            - gridArray[rowOfSelectedCell][columnOfSelectedCell]['leftBorder'], 
-            gridArray[rowOfSelectedCell][columnOfSelectedCell]['bottomBorder'] 
-            - gridArray[rowOfSelectedCell][columnOfSelectedCell]['topBorder']);
+        //     }
+        // }
 
+        //Do something if the mouse hovers over the margin
+        if (rowOfCell == -1 | columnOfCell == -1) {
+            [rowOfCell, columnOfCell] = this.hoveredCell
+        }
+
+        //Do something if a new cell is being hovered over
+        if (rowOfCell != this.hoveredCell[0] | columnOfCell != this.hoveredCell[1]) {
+            console.log("New cell hovered over")
+            this.unhoveredCellHandler(this.hoveredCell[0], this.hoveredCell[1]);
+            this.hoveredCell = [rowOfCell, columnOfCell];
+            this.hoveredCellHandler(rowOfCell, columnOfCell);
+        }
+
+
+        //Do something if a new cell is being hovered over
+        if (rowOfCell != this.hoveredCell[0] | columnOfCell != this.hoveredCell[1]) {
+            console.log("New cell hovered over")
+            this.unhoveredCellHandler(this.hoveredCell[0], this.hoveredCell[1]);
+            this.hoveredCell = [rowOfCell, columnOfCell];
+            this.hoveredCellHandler(rowOfCell, columnOfCell);
+        }
+
+        
+    }
+
+    hoveredCellHandler(rowOfHoveredCell, columnOfHoveredCell) {
+        this.gridArray[rowOfHoveredCell][columnOfHoveredCell].pipeDisplay.drawBorder("black", 3)
+    }
+    
+    unhoveredCellHandler(rowOfHoveredCell, columnOfHoveredCell) {
+        this.gridArray[rowOfHoveredCell][columnOfHoveredCell].pipeDisplay.reDrawCell();
+        // this.gridArray[rowOfHoveredCell][columnOfHoveredCell].pipeDisplay.reDrawCell();
     }
 
 };
