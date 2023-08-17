@@ -95,7 +95,6 @@ export default class pipePath {
     }
 
     compareTwoCells(listOfCells, mainIndex, comparisonIndex) {
-        console.log("List Of Cells:", listOfCells)
         var rowResult = this.compareTwoRows(listOfCells, mainIndex, comparisonIndex)
         var columnResult = this.compareTwoColumns(listOfCells, mainIndex, comparisonIndex)
         if (rowResult != false) {
@@ -161,17 +160,9 @@ function createGradient(listOfCells) {
 
 
     var listOfNewColors = Array.from({length: listOfCells.length}, (_, i) => "#" + listOfRedShades[i] + listOfGreenShades[i] + listOfBlueShades[i])
-    console.log("listOfNewColors", listOfNewColors)
 
-    console.log(listOfCells)
     for (let i=1;i<listOfCells.length-1;i++) {
-        console.log(listOfCells)
         var chosenPipe = listOfCells[i].chosenPipe
-        console.log("listOfCells[i]", listOfCells[i]);
-        console.log("chosenPipe", chosenPipe);
-        console.log("listOfCells[i].cell[chosenPipe]", listOfCells[i].cell[chosenPipe]);
-        console.log("listOfNewColors[i]", listOfNewColors[i]);
-
         listOfCells[i].cell.pipeDisplay[chosenPipe].color = listOfNewColors[i];
         listOfCells[i].cell.pipeDisplay.reDrawCell();
     }

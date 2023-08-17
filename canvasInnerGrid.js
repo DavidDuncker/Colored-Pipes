@@ -68,7 +68,7 @@ class canvasInnerGrid {
         for (let row=0; row<gridArray.length; row++) {
             var topBorder = gridArray[row][0]['topBorder'];
             var bottomBorder = gridArray[row][0]['bottomBorder'];
-            if ((inputY >= topBorder+5) && (inputY <= bottomBorder-5)) {
+            if ((inputY >= topBorder) && (inputY <= bottomBorder)) {
                 rowOfCell = row;
             }
         }
@@ -78,7 +78,7 @@ class canvasInnerGrid {
         for (let column=0; column<gridArray[0].length; column++) {
             var leftBorder = gridArray[0][column]['leftBorder'];
             var rightBorder = gridArray[0][column]['rightBorder'];
-            if ((inputX >= leftBorder+5) && (inputX <= rightBorder-5)) {
+            if ((inputX >= leftBorder) && (inputX <= rightBorder)) {
                 columnOfCell = column;
             }
         }

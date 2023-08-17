@@ -8,7 +8,7 @@
         background-color: #f1f1f1;
     }
     </style>
-
+    <title>David Duncker's Color Gradient Pipe Creator</title>
 </head>
 <body onload="window.initializeCanvas()">
     <script type="module">
@@ -55,13 +55,17 @@
                         window.canvas.grid.pipePath.addCell(cellRow, cellColumn)
 
                     }
+                    else {
+                        window.canvas.grid.getCellFromPoint(e.offsetX, e.offsetY);
+                        var cellRow = window.canvas.grid.hoveredCell[0];
+                        var cellColumn = window.canvas.grid.hoveredCell[1];
+                        window.canvas.grid.pipePath.declareEndCell(cellRow, cellColumn)
+
+                    }
                 }
                 console.log("window.canvas.grid.pipeDraggingMode", window.canvas.grid.pipeDraggingMode)
 
             })
-
-            // grid.createBorders(3, 'black')
-            window.canvas.grid.gridArray[1][1].drawPipe("top","left","red");
 
         }
 
@@ -80,28 +84,46 @@
     </script>
     <script src="jscolor.js"></script>
 
+<h1>David Duncker's Color Gradient Pipe Creator</h1>
+<hr>
 
-<p>Canvas created.</p>
-
-<p>Pick a color:</p>
 <form onsubmit="showFormData(this); return false;">
+    <h2>Input options</h2>
+    1. Pick a color: <button data-jscolor="{valueElement:'#color'}"></button>
+    <input id="color" value="FFA000" name="color" type="hidden"><br><br>
+
+    2. Choose an action:<br>
+    <input type="radio" name="input_method" id="solid_color" value="color">
+    <label for="solid_color">Fill the cells of the canvas with the selected color</label><br>
+
+    <input type="radio" name="input_method" id="gradient_pipe" value="pipe">
+    <label for="gradient_pipe">Connect the colored cells with a draggable pipe that creates a color gradient (Click, Drag, Click)</label><br><br>
+
+    3. Click below to update changes:<br>
+    <input type="submit" value="Update input for canvas">
+
+    <hr>
+
+    <h2>Instructions</h2>
 
     <p>
-        Pick a color
-        <button data-jscolor="{valueElement:'#color'}"></button>
-        <input id="color" value="FFA000" name="color" type="hidden">
+        <b>Step 1:</b> Pick a color
     </p>
-    <p>
-        Choose whether you want to fill a cell with a solid color, or connect solid colors together with gradient pipes<br>
-        <input type="radio" name="input_method" id="solid_color" value="color">
-        <label for="solid_color">Input solid color</label><br>
+    <p><b>Step 2:</b> Click on "Fill the cells of the canvas with the selected color", under "Choose an action"</p>
+    <p><b>Step 3:</b> Press "Update input for canvas"</p>
+    <p><b>Step 4:</b> Click on several different parts of the canvas <br>
+            to fill the canvas cells with solid colors</p>
 
-        <input type="radio" name="input_method" id="gradient_pipe" value="pipe">
-        <label for="gradient_pipe">Input gradient pipe</label><br>
+
+    <p><b>Step 5:</b> Click on "Connect the colored cells with <br>
+        a draggable pipe that creates a color gradient"</p>
+    <p><b>Step 6:</b> Press "Update input for canvas"</p>
+    <p><b>Step 7:</b> Click on a colored cell in the canvas, <br>
+        slowly drag the mouse to another colored cell, <br>
+        then click on that 2nd colored cell</p><br>
 
     </p>
 
-    <input type="submit" value="Update">
 </form>
 
 
