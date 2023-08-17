@@ -244,16 +244,19 @@ class PipeDisplayInsideCell {
     }
 
     drawPipe(side1, side2, color) {
-        //Determine if the sides of the cell are already occupied
-        if (this.borders[side1].associatedPipe != null | this.borders[side2].associatedPipe != null) {
-            console.log("Pipe already exist in border")
-        }
+        var whichPipe = null;
+
+        // //Determine if the sides of the cell are already occupied
+        // if (this.borders[side1].associatedPipe != null | this.borders[side2].associatedPipe != null) {
+        //     console.log("Pipe already exist in border")
+        // }
 
         //Determine if we should label this pipe "Pipe 1" or "Pipe 2", and update the Pipe Display class
         if (this.pipe1.exists == false) {
             this.pipe1.exists = true;
             this.pipe1.side1 = side1;
             this.pipe1.side2 = side2;
+            this.whichPipe = "pipe1";
         }
 
         else if (this.pipe2.exists == true 
@@ -261,6 +264,7 @@ class PipeDisplayInsideCell {
             this.pipe2.exists = true;
             this.pipe2.side1 = side1;
             this.pipe2.side2 = side2;
+            this.whichPipe = "pipe2";
         }
 
         else {
@@ -270,6 +274,8 @@ class PipeDisplayInsideCell {
         this.drawPipeEdge(side1, color);
         this.drawPipeEdge(side2, color);
         this.drawPipeCenter(side1, side2, color)
+
+        return this.whichPipe
 
     }
 
