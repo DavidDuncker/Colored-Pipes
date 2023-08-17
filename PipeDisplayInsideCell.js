@@ -13,6 +13,7 @@ class SideBorder {
 class PipeDisplayInsideCell {
     pipe1 = new Pipe;
     pipe2 = new Pipe;
+    color = false;
 
     leftBorder = new SideBorder;
     rightBorder = new SideBorder;
@@ -244,7 +245,6 @@ class PipeDisplayInsideCell {
 
     drawPipe(side1, side2, color) {
         //Determine if the sides of the cell are already occupied
-        console.log(side1, this.borders[side1])
         if (this.borders[side1].associatedPipe != null | this.borders[side2].associatedPipe != null) {
             console.log("Pipe already exist in border")
         }
@@ -274,7 +274,7 @@ class PipeDisplayInsideCell {
     }
 
     reDrawCell() {
-        this.drawSolidColor(this.parentCell.bgcolor)
+        this.drawSolidColor(this.parentCell.bgcolor, false)
         if (this.pipe1.exists == true) {
             this.drawPipe(
                 this.pipe1.side1,
@@ -290,6 +290,10 @@ class PipeDisplayInsideCell {
                 this.pipe2.color
             )
     
+        }
+
+        if (this.color) {
+            this.drawSolidColor(this.color, true)
         }
 
     }
@@ -424,7 +428,10 @@ class PipeDisplayInsideCell {
 
     }
 
-    drawSolidColor(color) {
+    drawSolidColor(color, newCellSpecificColor=false) {
+        if (newCellSpecificColor==true) {
+            this.color = color;
+       }
         this.context.fillStyle = color;
         this.context.fillRect(this.leftBorder.location-1, this.topBorder.location, 
             this.rightBorder.location - this.leftBorder.location + 1, 
@@ -461,7 +468,6 @@ class PipeDisplayInsideCell {
             this.bottomBorder.location - thickness,
             this.rightBorder.location - this.leftBorder.location - 2*thickness,
             thickness)
-            console.log(this.bottomBorder.location - this.topBorder.location   )
 
     }
 

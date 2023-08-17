@@ -7,7 +7,14 @@ class canvasInnerGrid {
     gridArray = [];
     selectedCell = null;
     hoveredCell = [0, 0];
+    hoveredCellChanged = () => {};
     bgcolor = "#f1f1f1";
+    pipeDraggingMode = false;
+    canvasInputMethod = 'color';
+    pipePath = null;
+
+
+    
 
     getCells() {
         var rowSize = this.canvas.height/this.numberOfRows;
@@ -18,7 +25,7 @@ class canvasInnerGrid {
         for (let i=0; i<numberOfRows; i++) {
             gridArray.push([]);
             for(let j=0; j<numberOfColumns; j++) {
-                var cell = new Cell(this.canvas, i, j, rowSize, columnSize, this.bgcolor);
+                var cell = new Cell(this.canvas, i, j, rowSize, columnSize, this.bgcolor, i, j);
                 gridArray[i].push(cell);
             }
         }
@@ -63,7 +70,6 @@ class canvasInnerGrid {
             var bottomBorder = gridArray[row][0]['bottomBorder'];
             if ((inputY >= topBorder+5) && (inputY <= bottomBorder-5)) {
                 rowOfCell = row;
-                console.log(topBorder, inputY, bottomBorder)
             }
         }
 
@@ -91,7 +97,6 @@ class canvasInnerGrid {
 
         //Do something if a new cell is being hovered over
         if (rowOfCell != this.hoveredCell[0] | columnOfCell != this.hoveredCell[1]) {
-            console.log("New cell hovered over")
             this.unhoveredCellHandler(this.hoveredCell[0], this.hoveredCell[1]);
             this.hoveredCell = [rowOfCell, columnOfCell];
             this.hoveredCellHandler(rowOfCell, columnOfCell);
@@ -100,7 +105,6 @@ class canvasInnerGrid {
 
         //Do something if a new cell is being hovered over
         if (rowOfCell != this.hoveredCell[0] | columnOfCell != this.hoveredCell[1]) {
-            console.log("New cell hovered over")
             this.unhoveredCellHandler(this.hoveredCell[0], this.hoveredCell[1]);
             this.hoveredCell = [rowOfCell, columnOfCell];
             this.hoveredCellHandler(rowOfCell, columnOfCell);
@@ -109,13 +113,19 @@ class canvasInnerGrid {
         
     }
 
-    hoveredCellHandler(rowOfHoveredCell, columnOfHoveredCell) {
-        this.gridArray[rowOfHoveredCell][columnOfHoveredCell].pipeDisplay.drawBorder("black", 3)
+    hoveredCellHandler(rowOfNewHoveredCell, columnOfNewHoveredCell) {
+        this.gridArray[rowOfNewHoveredCell][columnOfNewHoveredCell].pipeDisplay.drawBorder("black", 3)
+        if (this.canvasInputMethod == 'pipe' && this.pipeDraggingMode == true) {
+            this.pipePath.addCell(rowOfNewHoveredCell, columnOfNewHoveredCell)
+        }
+        else if (this.canvasInputMethod == 'pipe' && this.pipeDraggingMode == false && this.pipePath != null) {
+            this.pipePath.declareEndCell(rowOfNewHoveredCell, columnOfNewHoveredCell)
+        }
+
     }
     
-    unhoveredCellHandler(rowOfHoveredCell, columnOfHoveredCell) {
-        this.gridArray[rowOfHoveredCell][columnOfHoveredCell].pipeDisplay.reDrawCell();
-        // this.gridArray[rowOfHoveredCell][columnOfHoveredCell].pipeDisplay.reDrawCell();
+    unhoveredCellHandler(rowOfUnhoveredCell, columnOfUnhoveredCell) {
+        this.gridArray[rowOfUnhoveredCell][columnOfUnhoveredCell].pipeDisplay.reDrawCell();
     }
 
 };

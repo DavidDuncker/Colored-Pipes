@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+    canvas {
+        border: 1px solid #d3d3d3;
+        background-color: #f1f1f1;
+    }
+    </style>
+
+</head>
+<body onload="window.initializeCanvas()">
+    <script type="module">
+        import canvasInnerGrid from "./canvasInnerGrid.js";
+        import pipePath from "./pipePath.js";
+
+        window.canvas = {};
+        window.canvas.inputColor = "#FFA000";
+        window.canvas.inputMethod = "color";
+        window.canvas.grid = null;
+
+
+        function initializeCanvas() {
+            canvasArea.open();
+            window.canvas.grid = new canvasInnerGrid(7, 15, canvasArea.canvas);
+
+            canvasArea.canvas.addEventListener("mousedown", (e) => {})
+            canvasArea.canvas.addEventListener("mousemove", (e) => {
+                window.canvas.grid.getCellFromPoint(e.offsetX, e.offsetY)
+                if (window.canvas.grid.pipeDraggingMode == true && window.canvas.inputMethod == "pipe") {
+                    window.canvas.grid.hoveredCellChanged = () => {}
+                }
+                else if (window.canvas.grid.pipeDraggingMode == false && window.canvas.inputMethod == "pipe") {
+                    window.canvas.grid.hoveredCellChanged = () => {}
+                }
+            })
+            canvasArea.canvas.addEventListener("mouseup", (e) => {})
+            canvasArea.canvas.addEventListener("click", (e) => {
+                if (window.canvas.inputMethod == "color") {
+                    var selected_row = window.canvas.grid.hoveredCell[0];
+                    var selected_column = window.canvas.grid.hoveredCell[1];
+                    window.canvas.grid.gridArray[selected_row][selected_column].pipeDisplay.drawSolidColor(window.canvas.inputColor, true)
+                }
+
+                console.log("window.canvas.inputMethod", window.canvas.inputMethod);
+                console.log("window.canvas.grid.pipeDraggingMode", window.canvas.grid.pipeDraggingMode)
+                if (window.canvas.inputMethod == "pipe") {
+                    window.canvas.grid.pipeDraggingMode = !window.canvas.grid.pipeDraggingMode
+                    if (window.canvas.grid.pipeDraggingMode) {
+                        window.canvas.grid.pipePath = new pipePath(window.canvas.grid);
+                        window.canvas.grid.getCellFromPoint(e.offsetX, e.offsetY);
+                        var cellRow = window.canvas.grid.hoveredCell[0];
+                        var cellColumn = window.canvas.grid.hoveredCell[1];
+                        window.canvas.grid.pipePath.addCell(cellRow, cellColumn)
+
+                    }
+                }
+                console.log("window.canvas.grid.pipeDraggingMode", window.canvas.grid.pipeDraggingMode)
+
+            })
+
+            // grid.createBorders(3, 'black')
+            window.canvas.grid.gridArray[1][1].drawPipe("top","left","red");
+
+        }
+
+        var canvasArea = {
+            canvas : document.createElement("canvas"),
+            open : function() {
+                this.canvas.width = 480;
+                this.canvas.height = 270;
+                this.context = this.canvas.getContext("2d");
+                document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+            }
+        }
+        
+
+        window.initializeCanvas = initializeCanvas;
+    </script>
+    <script src="jscolor.js"></script>
+
+
+<p>Canvas created.</p>
+
+<p>Pick a color:</p>
+<form onsubmit="showFormData(this); return false;">
+
+    <p>
+        Pick a color
+        <button data-jscolor="{valueElement:'#color'}"></button>
+        <input id="color" value="FFA000" name="color" type="hidden">
+    </p>
+    <p>
+        Choose whether you want to fill a cell with a solid color, or connect solid colors together with gradient pipes<br>
+        <input type="radio" name="input_method" id="solid_color" value="color">
+        <label for="solid_color">Input solid color</label><br>
+
+        <input type="radio" name="input_method" id="gradient_pipe" value="pipe">
+        <label for="gradient_pipe">Input gradient pipe</label><br>
+
+    </p>
+
+    <input type="submit" value="Update">
+</form>
+
+
+<pre id="form-data"></pre>
+
+<script>
+// Helper function that displays submitted form data
+function showFormData(form) {
+    window.form = form
+    var lines = [];
+    window.form = {};
+
+    for (var i = 0; i < form.elements.length; i++) {
+        var e = form.elements[i];
+        // console.log(e);
+        if (e.name && ((e.type == 'radio' && e.checked) || (e.type != 'radio'))) {
+            lines.push(e.name + ' = ' + e.value);
+            if (e.name == "color") {
+                window.canvas.inputColor = e.value
+                window.canvas.grid.canvasInputMethod = 'color'
+
+            }
+            else if (e.name == "input_method") {
+                window.canvas.inputMethod = e.value
+                window.canvas.grid.canvasInputMethod = 'pipe'
+            }
+
+        }
+    }
+
+    // var out = document.querySelector('#form-data');
+    // out.innerHTML = '';
+    // out.appendChild(document.createTextNode(lines.join('\n')));
+}
+</script></body>
+</html>

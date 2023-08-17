@@ -9,8 +9,10 @@ class Cell {
     canvas = null;
     isSelected = false;
     bgcolor = "#f1f1f1";
+    row = null;
+    column = null;
     
-    constructor(canvas, rowNumber, columnNumber, rowSize, columnSize, bgcolor) {
+    constructor(canvas, rowNumber, columnNumber, rowSize, columnSize, bgcolor, row, column) {
         this.canvas = canvas;
         this.topBorder = rowNumber * rowSize;
         this.bottomBorder = (rowNumber + 1) * rowSize;
@@ -18,6 +20,8 @@ class Cell {
         this.rightBorder = (columnNumber + 1) * columnSize;
         this.pipeDisplay = new PipeDisplayInsideCell(this, null, null, null, null);
         this.bgcolor = "#f1f1f1";
+        this.row = row;
+        this.column = column;
     }
 
     drawPipe(direction1, direction2, color) {
